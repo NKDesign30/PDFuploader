@@ -12,6 +12,9 @@ if (!defined('ABSPATH')) {
   exit;
 }
 
+// Composer's Autoloader einbinden, wenn Sie eine Bibliothek über Composer installiert haben
+require_once __DIR__ . '/vendor/autoload.php';
+
 // Hook für das Hinzufügen eines Menüeintrags im Admin-Bereich
 add_action('admin_menu', 'pdf_to_post_importer_menu');
 
@@ -75,13 +78,17 @@ function handle_pdf_file_upload()
 // Funktion zum Konvertieren der PDF-Datei in einen WordPress-Beitrag
 function convert_pdf_to_post($file_path)
 {
-  // Stellen Sie sicher, dass die PDFParser-Bibliothek geladen ist
-  require_once 'vendor/autoload.php';
+  // Verwenden Sie TCPDF, um die PDF-Datei zu verarbeiten
+  $pdf = new TCPDF();
+  $pagecount = $pdf->setSourceFile($file_path);
 
-  // PDF-Datei laden und Text extrahieren
-  $parser = new \Smalot\PdfParser\Parser();
-  $pdf = $parser->parseFile($file_path);
-  $text = $pdf->getText();
+  $text = '';
+  for ($i = 1; $i <= $pagecount; $i++) {
+    $tplIdx = $pdf->importPage($i);
+    $pdf->addPage();
+    $pdf->useTemplate($tplIdx);
+    $text .= $pdf->getText();
+  }
 
   // Text zu HTML konvertieren
   $html_content = text_to_html($text);
@@ -147,5 +154,4 @@ function clean_extracted_text($text)
 
   return $text;
 }
-
 $cleaned_text = clean_extracted_text($extracted_text);
