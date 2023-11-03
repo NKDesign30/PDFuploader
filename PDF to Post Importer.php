@@ -133,18 +133,17 @@ function text_to_html($text)
 // Funktion zum Bereinigen des extrahierten Textes
 function clean_extracted_text($text)
 {
-  // Ersetzen von Zeilen, die als Überschriften erscheinen könnten
-  $text = preg_replace_callback('/^\s*([A-ZÄÖÜß][A-ZÄÖÜß ]+)\s*$/m', function ($matches) {
-    return "\n<strong>" . trim($matches[1]) . "</strong>\n";
-  }, $text);
-
-  // Entfernen von übermäßigen Leerzeichen
+  // Entfernen von übermäßigen Leerzeichen und Zeilenumbrüchen
   $text = preg_replace('/[ ]{2,}/', ' ', $text);
-  // Entfernen von Leerzeichen vor und nach Zeilenumbrüchen
-  $text = preg_replace('/\s*\n\s*/', "\n", $text);
-  // Ersetzen von mehreren Zeilenumbrüchen durch einen einzigen
-  $text = preg_replace('/[\r\n]{2,}/', "\n\n", $text);
-  // Weitere Bereinigungen können hier hinzugefügt werden...
+  $text = preg_replace('/(\n\s+|\s+\n)/', "\n", $text);
+  $text = preg_replace('/\n{2,}/', "\n\n", $text);
+
+  // Entfernen von Leerzeichen um Satzzeichen
+  $text = preg_replace('/\s+([,\.!\?;:])/', '$1', $text);
+  $text = preg_replace('/([,\.!\?;:])\s+/', '$1 ', $text);
+
+  // Versuch, Wörter zu reparieren, die fälschlicherweise getrennt wurden
+  $text = preg_replace('/(\w)\s+(\w)/', '$1$2', $text);
 
   return $text;
 }
