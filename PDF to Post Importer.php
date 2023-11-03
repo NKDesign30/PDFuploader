@@ -87,3 +87,18 @@ function convert_pdf_to_post($file_path)
   wp_redirect(admin_url('post.php?action=edit&post=' . $post_id));
   exit;
 }
+function clean_extracted_text($text)
+{
+  // Entfernen von übermäßigen Leerzeichen
+  $text = preg_replace('/[ ]{2,}/', ' ', $text);
+  // Entfernen von Leerzeichen vor und nach Zeilenumbrüchen
+  $text = preg_replace('/\s*\n\s*/', "\n", $text);
+  // Ersetzen von mehreren Zeilenumbrüchen durch einen einzigen
+  $text = preg_replace('/[\r\n]{2,}/', "\n\n", $text);
+  // Weitere Bereinigungen können hier hinzugefügt werden...
+
+  return $text;
+}
+
+// Verwenden Sie diese Funktion nach der Extraktion des Textes aus der PDF
+$cleaned_text = clean_extracted_text($text);
