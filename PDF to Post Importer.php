@@ -73,7 +73,7 @@ function handle_pdf_file_upload()
 }
 
 // Funktion zum Konvertieren der PDF-Datei in einen WordPress-Beitrag
-function convert_pdf_to_post($file_path, $file_name)
+function convert_pdf_to_post($file_path)
 {
   // Stellen Sie sicher, dass die PDFParser-Bibliothek geladen ist
   require_once 'vendor/autoload.php';
@@ -83,15 +83,12 @@ function convert_pdf_to_post($file_path, $file_name)
   $pdf = $parser->parseFile($file_path);
   $text = $pdf->getText();
 
-  // Bereinigen des extrahierten Textes
-  $cleaned_text = clean_extracted_text($text);
-
   // Text zu HTML konvertieren
-  $html_content = text_to_html($cleaned_text);
+  $html_content = text_to_html($text);
 
   // Beitrag erstellen
   $post_data = array(
-    'post_title'    => wp_strip_all_tags('PDF Import: ' . basename($file_name)),
+    'post_title'    => wp_strip_all_tags('PDF Import: ' . basename($file_path)),
     'post_content'  => $html_content,
     'post_status'   => 'publish',
     'post_author'   => get_current_user_id(),
