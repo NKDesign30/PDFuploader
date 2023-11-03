@@ -3,8 +3,8 @@
 /**
  * Plugin Name: PDF to Post Importer
  * Description: Import PDF files and convert them into WordPress posts with formatted HTML content.
- * Version: 1.0.0
- * Author: Ihr Name
+ * Version: 1.0.1
+ * Author: Niko
  */
 
 // Sicherstellen, dass das Skript nicht direkt aufgerufen wird
@@ -73,7 +73,7 @@ function handle_pdf_file_upload()
 }
 
 // Funktion zum Konvertieren der PDF-Datei in einen WordPress-Beitrag
-function convert_pdf_to_post($file_path)
+function convert_pdf_to_post($file_path, $file_name)
 {
   // Stellen Sie sicher, dass die PDFParser-Bibliothek geladen ist
   require_once 'vendor/autoload.php';
@@ -83,8 +83,11 @@ function convert_pdf_to_post($file_path)
   $pdf = $parser->parseFile($file_path);
   $text = $pdf->getText();
 
+  // Bereinigen des extrahierten Textes
+  $cleaned_text = clean_extracted_text($text);
+
   // Text zu HTML konvertieren
-  $html_content = text_to_html($text);
+  $html_content = text_to_html($cleaned_text);
 
   // Beitrag erstellen
   $post_data = array(
@@ -109,11 +112,44 @@ function convert_pdf_to_post($file_path)
   exit;
 }
 
-// Funktion zum Umwandeln von Text in HTML
+// Funktion zum Bereinigen und Konvertieren von Text zu HTML
 function text_to_html($text)
 {
-  // Hier kommt Ihre Logik zum Konvertieren des Textes in HTML
-  // Dies ist ein Platzhalter und sollte durch Ihre eigene Logik ersetzt werden
-  $html = '<p>' . nl2br($text) . '</p>';
-  return $html;
+  // Entfernen von übermäßigen Leerzeichen und Zeilenumbrüchen
+  $text = clean_extracted_text($text);
+
+  // Konvertieren von Zeilenumbrüchen zu <br>
+  $html_content = nl2br($text);
+
+  // Ersetzen von mehrfachen <br> zu einem Absatz
+  $html_content = preg_replace('/(<br\s*\/?>\s*){2,}/', '</p><p>', $html_content);
+
+  // Hinzufügen von Absatz-Tags am Anfang und Ende des Inhalts
+  $html_content = '<p>' . $html_content . '</p>';
+
+  // Entfernen von leeren Absätzen
+  $html_content = str_replace('<p></p>', '', $html_content);
+
+  return $html_content;
 }
+
+// Funktion zum Bereinigen des extrahierten Textes
+function clean_extracted_text($text)
+{
+  // Ersetzen von Zeilen, die als Überschriften erscheinen könnten
+  $text = preg_replace_callback('/^\s*([A-ZÄÖÜß][A-ZÄÖÜß ]+)\s*$/m', function ($matches) {
+    return "\n<strong>" . trim($matches[1]) . "</strong>\n";
+  }, $text);
+
+  // Entfernen von übermäßigen Leerzeichen
+  $text = preg_replace('/[ ]{2,}/', ' ', $text);
+  // Entfernen von Leerzeichen vor und nach Zeilenumbrüchen
+  $text = preg_replace('/\s*\n\s*/', "\n", $text);
+  // Ersetzen von mehreren Zeilenumbrüchen durch einen einzigen
+  $text = preg_replace('/[\r\n]{2,}/', "\n\n", $text);
+  // Weitere Bereinigungen können hier hinzugefügt werden...
+
+  return $text;
+}
+
+$cleaned_text = clean_extracted_text($extracted_text);
